@@ -1,0 +1,7 @@
+discord.py>=2.4.0
+python-dotenv>=1.0.0
+pillow>=10.0.0
+pytesseract>=0.3.10
+better-profanity>=0.7.0
+imagehash>=4.3.1
+nudenet>=3.4.0

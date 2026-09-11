@@ -1,0 +1,14 @@
+# Add one banned word/phrase per line (case-insensitive, matched as whole words).
+# Lines starting with # are ignored.
+#
+# This file intentionally ships empty. Community-specific slurs, slang, and
+# coded terms vary a lot between servers, and the built-in offline
+# profanity/slur list (moderation.py) already catches most hate speech and
+# slurs in text without needing a hardcoded list here. Use this file only
+# for extra terms specific to your community that you want auto-deleted
+# regardless of that (e.g. known raid phrases, server-specific inside
+# "jokes" that turned toxic, etc).
+#
+# Example format (remove the # to activate):
+# examplebadword
+# another bad phrase
