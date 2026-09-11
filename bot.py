@@ -272,7 +272,7 @@ async def handle_protected_tag_violation(message: discord.Message, tagged_member
 
     try:
         await message.author.send(
-            f"You tagged a Staff Membet in **{message.guild.name}**, "
+            f"You tagged a Staff Member in **{message.guild.name}**, "
             f"Please do not tag staff, if you need support, please open a ticket. This is warning #{warning_count}."
         )
     except discord.Forbidden:
