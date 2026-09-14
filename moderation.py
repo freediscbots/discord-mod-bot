@@ -244,7 +244,7 @@ def _get_nsfw_detector():
     return _nsfw_detector
 
 
-def _check_frame_nsfw(img: Image.Image) -> tuple[bool, str]:
+def _check_frame_nsfw(img: Image.Image) -> tuple[bool, str, str]:
     detector = _get_nsfw_detector()
     fd, tmp_path = tempfile.mkstemp(suffix=".jpg")
     try:
@@ -257,12 +257,18 @@ def _check_frame_nsfw(img: Image.Image) -> tuple[bool, str]:
         except OSError:
             pass
 
+    best_label = ""
+    best_score = 0.0
     for d in detections:
         label = d.get("class", "")
         score = d.get("score", 0)
+        if label in config.NSFW_FLAGGED_LABELS and score > best_score:
+            best_label, best_score = label, score
         if label in config.NSFW_FLAGGED_LABELS and score >= config.NSFW_THRESHOLD:
-            return True, f"{label} ({score:.2f})"
-    return False, ""
+            return True, f"{label} ({score:.2f})", ""
+
+    near_miss = f"{best_label} ({best_score:.2f})" if best_label else "nothing flaggable detected"
+    return False, "", near_miss
 
 
 async def check_image_nsfw(data: bytes, is_gif: bool = False) -> ModerationResult:
@@ -273,16 +279,19 @@ async def check_image_nsfw(data: bytes, is_gif: bool = False) -> ModerationResul
         img = Image.open(io.BytesIO(data))
         if is_gif and getattr(img, "is_animated", False):
             all_frames = list(ImageSequence.Iterator(img))
-            step = max(1, len(all_frames) // 4)
-            frames = [f.convert("RGB") for f in all_frames[::step][:4]]
+            step = max(1, len(all_frames) // 6)
+            frames = [f.convert("RGB") for f in all_frames[::step][:6]]
         else:
             frames = [img.convert("RGB")]
 
-        for frame in frames:
-            flagged, detail = _check_frame_nsfw(frame)
+        print(f"[moderation] NSFW check running on {len(frames)} frame(s), threshold={config.NSFW_THRESHOLD}")
+        highest_seen = ""
+        for i, frame in enumerate(frames):
+            flagged, detail, near_miss = _check_frame_nsfw(frame)
             if flagged:
-                print(f"[moderation] NSFW content detected: {detail}")
+                print(f"[moderation] NSFW content detected on frame {i}: {detail}")
                 return ModerationResult(True, f"NSFW content detected: {detail}")
+            print(f"[moderation] frame {i}: {near_miss}")
         return ModerationResult(False)
     except Exception as e:
         print(f"[moderation] NSFW check failed: {e}")
